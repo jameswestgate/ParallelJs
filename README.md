@@ -1,5 +1,3 @@
-ParallelJs
-==========
 
 Unit Tests
 ----------
