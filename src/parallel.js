@@ -4,9 +4,11 @@
 /* Copyright James Westgate 2013 */
 /* Dual licensed under the MIT and GPL licenses */
 
+
+/// Core Module ///
 (function(context) {
 
-	//-- Node Class --
+	// -- Node Class --
 	function Node() {
 
 	}
@@ -17,6 +19,25 @@
 	}
 
 	NodeList.prototype = new Array();
+
+	//Query or set attribute values. Converts to stirng at present
+	NodeList.prototype.attr = function(k, v) {
+
+		if (this.length) return this;
+
+		//Read value of first attribute in results
+		if (!v) return this[0].target[k]; //break chaining
+
+		//Update results
+		this.forEach(function(node) {
+
+			for (var key in node.target) {
+				node.target[key.toString()] = v.toString();
+			}
+		});
+
+		return this; //allow chaining
+	}
 
 	
 	//-- UI Singleton --
@@ -81,15 +102,15 @@
 		}
 	}
 
-
 	//-- Exports
 	var ui = new UI();
 
-	context.Node = Node;
-	context.NodeList = NodeList;
-	
 	context.dom = function(q) {
 		return ui.select.call(ui, q);
 	}
 
+	context.dom.Node = Node;
+	context.dom.NodeList = NodeList;
+
 })(this);
+
