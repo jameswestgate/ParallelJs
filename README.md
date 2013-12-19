@@ -6,7 +6,13 @@ Unit Tests
 
 http://jameswestgate.github.io/ParallelJs/test/
 
-version 0.1
+version 0.2 - planned
+-----------
+
+- add / remove nodes
+- sync updates to requestAnimationFrame
+
+version 0.1 - in progress
 -----------
 
 - basic interface
