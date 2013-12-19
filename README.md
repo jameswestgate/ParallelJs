@@ -1,7 +1,10 @@
 ParallelJs
 ==========
 
+Unit Tests
+----------
 
+http://jameswestgate.github.io/ParallelJs/test/
 
 version 0.1
 -----------
