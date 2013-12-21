@@ -9,6 +9,7 @@ test('interface tests', function() {
 	
 });
 
+
 test('simple dom selection tests', function() {
   
 	var results = window.dom('#qunit-fixture');
@@ -24,6 +25,7 @@ test('simple dom selection tests', function() {
 	ok(result.source.id === 'qunit-fixture', 'result source has correct attribute value');
 	ok(result.target.id === 'qunit-fixture', 'result target has correct attribute value');
 });
+
 
 test('attribute tests', function() {
 

@@ -8,6 +8,9 @@
 /// Core Module ///
 (function(context) {
 
+	//Instance of the UI context used to push ui updates
+	var ui = new UI();
+
 	// -- Node Class --
 	function Node() {
 
@@ -20,20 +23,21 @@
 
 	NodeList.prototype = new Array();
 
-	//Query or set attribute values. Converts to stirng at present
+	//Query or set attribute values. Converts to string at present
 	NodeList.prototype.attr = function(k, v) {
 
-		if (this.length) return this;
+		if (this.length === 0 || (!k && !v)) return this;
 
 		//Read value of first attribute in results
-		if (!v) return this[0].target[k]; //break chaining
+		if (!v) return this[0].target[k];
 
 		//Update results
 		this.forEach(function(node) {
 
-			for (var key in node.target) {
-				node.target[key.toString()] = v.toString();
-			}
+			node.target[k.toString()] = v.toString();
+			
+			//This would need to be moved 
+			ui.updateElementAttributes(node);
 		});
 
 		return this; //allow chaining
@@ -87,13 +91,15 @@
       	}
 	}
 
-	UI.prototype.updateElementAttributes = function(element, node) {
+	UI.prototype.updateElementAttributes = function(node) {
 
 		//Loop through the target attributes and compare to the source
 		for (var key in node.target) {
 
 			//Check if key has been added or changed
-			if (node.target[key] !== node.source[key]) element.setAttribute(key, node.target[key]);
+			if (node.target[key] !== node.source[key]) {
+				this.elements[node.idx].setAttribute(key, node.target[key]);
+			}
 		}
 
 		//Remove any attributes that no longer exist in target
@@ -103,8 +109,6 @@
 	}
 
 	//-- Exports
-	var ui = new UI();
-
 	context.dom = function(q) {
 		return ui.select.call(ui, q);
 	}
