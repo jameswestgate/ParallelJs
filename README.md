@@ -3,7 +3,7 @@ Unit Tests
 
 http://jameswestgate.github.io/ParallelJs/test/
 
-version 0.2 - progress
+version 0.2 - in progress
 -----------
 
 - add / remove nodes
