@@ -35,6 +35,7 @@ test('attribute tests', function() {
 	ok(dom('#paragraph1').attr(), 'nodelist returned from empty attr');
 	ok(dom('#paragraph1').attr().attr() instanceof dom.NodeList, 'attr chaining working.');
 
+	//Attr function overwrites values which normally wouldnt be great for classes
 	ok(dom('#paragraph1').attr('class') === 'one two three', 'attr returning target value');
 	ok(dom('#paragraph1').attr('class', 'four') instanceof dom.NodeList, 'attr update chained');
 	ok(dom('#paragraph1').attr('class') === 'four', 'attr update value working');

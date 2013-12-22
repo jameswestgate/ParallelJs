@@ -35,10 +35,12 @@
 		this.forEach(function(node) {
 
 			node.target[k.toString()] = v.toString();
+			ui.enqueue(node);
 			
-			//This would need to be moved 
-			ui.updateElementAttributes(node);
 		});
+
+		//Force all updates
+		ui.flush();
 
 		return this; //allow chaining
 	}
@@ -47,6 +49,7 @@
 	//-- UI Singleton --
 	function UI() {
 		this.elements = []; //contains an array of each element that has been returned
+		this.nodes = []; //contains an array of Nodes that need updating
 	}
 
 	UI.prototype.select = function(q) {
@@ -75,6 +78,25 @@
 		}
 
 		return nodeList;
+	}
+
+	//Push the node to be updated onto the update queue
+	UI.prototype.enqueue = function(node) {
+		this.nodes.push(node);
+	}
+
+	//Update and remove all nodes out of the update queue
+	UI.prototype.flush = function() {
+
+		var node = this.nodes.shift();
+
+		while (node) {
+
+			//Update attributes (at this stage even if they havent changed)
+			this.updateElementAttributes(node);
+
+			node = this.nodes.shift();
+		}
 	}
 
 	//Return the attributes of an element 
