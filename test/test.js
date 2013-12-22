@@ -38,6 +38,9 @@ test('attribute tests', function() {
 	//Attr function overwrites values which normally wouldnt be great for classes
 	ok(dom('#paragraph1').attr('class') === 'one two three', 'attr returning target value');
 	ok(dom('#paragraph1').attr('class', 'four') instanceof dom.NodeList, 'attr update chained');
+
+	//Make sure changes are applied to dom 
+	ui.flush();
 	ok(dom('#paragraph1').attr('class') === 'four', 'attr update value working');
 })
 

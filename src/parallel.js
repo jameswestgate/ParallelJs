@@ -8,12 +8,11 @@
 /// Core Module ///
 (function(context) {
 
-	//Instance of the UI context used to push ui updates
-	var ui = new UI();
-
 	// -- Node Class --
 	function Node() {
-
+		this.idx = null, 
+		this.source = null,
+		this.target = null
 	}
 
 	//-- NodeList Class --
@@ -35,12 +34,9 @@
 		this.forEach(function(node) {
 
 			node.target[k.toString()] = v.toString();
-			ui.enqueue(node);
+			context.ui.enqueue(node);
 			
 		});
-
-		//Force all updates
-		ui.flush();
 
 		return this; //allow chaining
 	}
@@ -130,13 +126,25 @@
 		}
 	}
 
-	//-- Exports
-	context.dom = function(q) {
-		return ui.select.call(ui, q);
+	UI.prototype.frameRequest = function() {
+
+		//Force all updates
+		context.ui.flush();
+
+		context.requestAnimationFrame(context.ui.frameRequest);
 	}
 
+	//-- Exports
+	context.dom = function(q) {
+		return context.ui.select.call(context.ui, q);
+	}
+
+	context.ui = new UI();
 	context.dom.Node = Node;
 	context.dom.NodeList = NodeList;
+
+	//-- Begin callback loop
+	context.ui.frameRequest();
 
 })(this);
 
