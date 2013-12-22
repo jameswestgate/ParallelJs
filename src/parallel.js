@@ -1,6 +1,6 @@
 /* Library to enable javascript dom manipulation from another browser process  */
 /* https://github.com/jameswestgate/paralleljs */
-/* version 0.1 */
+/* version 0.2 */
 /* Copyright James Westgate 2013 */
 /* Dual licensed under the MIT and GPL licenses */
 
