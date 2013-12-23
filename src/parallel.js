@@ -10,14 +10,14 @@
 
 	// -- Node Class --
 	function Node() {
-		this.idx = null, 
-		this.source = null,
-		this.target = null
+		
+		//idx, source, target, text, tagName;
 	}
 
 	//-- NodeList Class --
 	function NodeList() {
-
+		
+		//fragment
 	}
 
 	NodeList.prototype = new Array();
@@ -41,6 +41,10 @@
 		return this; //allow chaining
 	}
 
+	NodeList.prototype.append = function(n) {
+		
+	}
+
 	
 	//-- UI Singleton --
 	function UI() {
@@ -51,7 +55,24 @@
 	UI.prototype.select = function(q) {
 		
 		var nodeList = new NodeList();
-		var results = document.querySelectorAll(q);
+		var results;
+
+		//HTML fragment creator
+		if (q.charAt(0) === '<' && q.charAt(q.length-1) === '>') {
+
+			//Get elements by placing inside a div
+			var div = document.createElement('div');
+			div.innerHTML = q;
+			results = div.childNodes;
+
+			//Mark the nodelist as a fragment
+			nodeList.fragment = true;
+		}
+
+		//Query based selector
+		else {
+			results = document.querySelectorAll(q);
+		}
 
 		for (var i=0, len=results.length; i < len; ++i) {
 
@@ -66,6 +87,7 @@
 			//Setup a new node object
 			var node = new Node();
 			node.idx = element._pidx;
+			node.tagName = element.tagName;
 
 			//Populate node attributes
 			this.getElementAttributes(element, node);
