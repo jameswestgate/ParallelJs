@@ -31,7 +31,7 @@ test('attribute tests', function() {
 
 	$('#qunit-fixture').append('<p class="one two three" id="paragraph1">hello world</p>');
 
-	ok(dom('#paragraph1'), 'paragraph element found.');
+	ok(dom('#paragraph1').length === 1, 'paragraph element found.');
 	ok(dom('#paragraph1').attr(), 'nodelist returned from empty attr');
 	ok(dom('#paragraph1').attr().attr() instanceof dom.NodeList, 'attr chaining working.');
 
@@ -43,6 +43,62 @@ test('attribute tests', function() {
 	ui.flush();
 	ok(dom('#paragraph1').attr('class') === 'four', 'attr update value working');
 })
+
+test('append tests', function() {
+
+	$('#qunit-fixture').append('<div id="div1">');
+
+	//Create a simple fragment -> nodeList
+	var nodeList = dom('<p id="paragraph2"></p>');
+	
+	ok(nodeList instanceof dom.NodeList, 'dom fragment as nodeList created');
+	ok(nodeList.length === 1, 'fragment returned with paragraph2 element.');
+	ok(nodeList[0] instanceof dom.Node, 'fragment nodeList contains Node');
+
+	//Append to test div
+	dom('#div1').append(nodeList);
+	ui.flush();
+
+	ok(dom('#paragraph2').length === 1, 'paragraph element appended');
+
+	//Simple fragment with attribute manipulation
+	nodeList = dom('<p id="paragraph3" class="five"></p>');
+	ok(nodeList.length === 1, 'fragment returned with paragraph3 element.');
+	ok(nodeList.attr('class') === 'five', 'attr update value working pre append');
+	
+	dom('#div1').append(nodeList);
+	ui.flush();
+	ok(dom('#paragraph3').attr('class') === 'five', 'attr update value working post append');
+
+	//Multiple child elements
+	nodeList = dom('<p id="paragraph4"></p><p id="paragraph5"></p>');
+	dom('#div1').append(nodeList);
+	ui.flush();
+
+	ok(dom('#paragraph4, #paragraph5').length === 2, 'paragraph elements 4 and 5 appended');
+
+	//Nested child elements
+	nodeList = dom('<p id="paragraph6"><span id="span1">hello world</span></p>');
+	
+	ok(nodeList.length === 1, 'fragment returned with paragraph6 element.');
+
+	dom('#div1').append(nodeList);
+	ui.flush();
+
+	ok(dom('#paragraph6, #span1').length === 2, 'paragraph element 6 and span1 appended');
+	ok(dom('#paragraph6 #span1').length === 1, 'span1 appended as child of paragraph6');
+
+	//Multiple chained appends same node
+	var nodeList1 = dom('<p id="paragraph7"></p>');
+	var nodeList2 = dom('<p id="paragraph8"></p>');
+	
+	dom('#div1').append(nodeList1).append(nodeList2);
+	ui.flush();
+
+	ok(dom('#paragraph7, #paragraph8').length === 2, 'paragraph elements 7 and 8 appended');
+
+	//Pass markup directly to append
+});
 
 
 

@@ -17,7 +17,23 @@
 	//-- NodeList Class --
 	function NodeList() {
 		
-		//fragment
+		var len = arguments.length;
+
+		//Loop through each argument and add node references
+		if (len) {
+			for (var i=0; i<len; i++) {
+				
+				var arr = arguments[i];
+				var len2 = arr.length;
+				
+				if (len2) {
+					for (var j=0; j<len2; j++) {
+						if (arr[j] instanceof Node) this.push(arr[j]);
+					}
+				}
+			}
+		}
+		
 	}
 
 	NodeList.prototype = new Array();
@@ -43,6 +59,15 @@
 
 	NodeList.prototype.append = function(n) {
 		
+		if (this.length === 0 || !n) return this;
+		if (!n.fragment) return;
+
+		var node = this[0];
+		node.append = (node.append) ? new NodeList(node.append, n) : n;
+
+		context.ui.enqueue(node);
+
+		return this;
 	}
 
 	
@@ -112,6 +137,7 @@
 
 			//Update attributes (at this stage even if they havent changed)
 			this.updateElementAttributes(node);
+			this.appendElements(node);
 
 			node = this.nodes.shift();
 		}
@@ -148,12 +174,28 @@
 		}
 	}
 
+	UI.prototype.appendElements = function(node) {
+		
+		if (node.append && node.append.length) {
+
+			var parentElement = this.elements[node.idx];
+			var child = node.append.shift();
+
+			while (child) {
+
+				parentElement.appendChild(this.elements[child.idx])
+				
+				child = node.append.shift();
+			}
+		}
+	}
+
 	UI.prototype.frameRequest = function() {
 
 		//Force all updates
 		context.ui.flush();
 
-		context.requestAnimationFrame(context.ui.frameRequest);
+		window.requestAnimationFrame(context.ui.frameRequest);
 	}
 
 	//-- Exports

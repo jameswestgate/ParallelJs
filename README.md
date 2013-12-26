@@ -3,6 +3,14 @@ Unit Tests
 
 http://jameswestgate.github.io/ParallelJs/test/
 
+
+version 0.3 - planned
+-----------
+
+- add text support
+- add each support
+- create plug-in api
+
 version 0.2 - in progress
 -----------
 
