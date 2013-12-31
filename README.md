@@ -7,6 +7,7 @@ http://jameswestgate.github.io/ParallelJs/test/
 version 0.3 - in progress
 -----------
 
+- move to split node value container
 - add text support
 - add each support
 - create plug-in api

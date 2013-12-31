@@ -11,7 +11,7 @@
 	// -- Node Class --
 	function Node() {
 		
-		//idx, source, target, text, tagName;
+		//idx, source, target
 	}
 
 	//-- NodeList Class --
@@ -36,7 +36,9 @@
 		
 	}
 
-	NodeList.prototype = new Array();
+	//#todo: Methods such as concat will return new arrays instead of NodeLists
+	//So we need to make this array-like instead
+	NodeList.prototype = new Array(); 
 
 	//Query or set attribute values. Converts to string at present
 	NodeList.prototype.attr = function(k, v) {
@@ -44,12 +46,12 @@
 		if (this.length === 0 || (!k && !v)) return this;
 
 		//Read value of first attribute in results
-		if (!v) return this[0].target[k];
+		if (!v) return this[0].target.attrs[k];
 
 		//Update results
 		this.forEach(function(node) {
 
-			node.target[k.toString()] = v.toString();
+			node.target.attrs[k.toString()] = v.toString();
 			context.ui.enqueue(node);
 			
 		});
@@ -63,9 +65,35 @@
 		if (!n.fragment) return;
 
 		var node = this[0];
-		node.append = (node.append) ? new NodeList(node.append, n) : n;
+
+		//#todo: unnessesary creation of another object, should extend existing array instead
+		node.append = (node.append) ? new NodeList(node.append, n) : n; 
 
 		context.ui.enqueue(node);
+
+		return this;
+	}
+
+	NodeList.prototype.text = function(s) {
+		
+		if (this.length === 0) return this;
+
+		var node = this[0];
+
+		if (!s) return node.source.text;
+		
+		node.target.text = s;
+		context.ui.enqueue(node);
+
+		return this;
+	}
+
+	NodeList.prototype.each = function(fn) {
+
+		this.forEach(function(node, i, a) {
+
+			fn.call(node, i, a);
+		});
 
 		return this;
 	}
@@ -81,6 +109,12 @@
 		
 		var nodeList = new NodeList();
 		var results;
+
+		//Passed in a node
+		if (q instanceof Node) {
+			nodeList.push(q);
+			return nodeList;
+		}
 
 		//HTML fragment creator
 		if (q.charAt(0) === '<' && q.charAt(q.length-1) === '>') {
@@ -114,6 +148,14 @@
 			node.idx = element._pidx;
 			node.tagName = element.tagName;
 
+			//Create a container for old and new values
+			//Will want to create a 'copy object' method here instead
+	 		node.source = {};
+ 			node.target = {};
+
+ 			node.source.text = element.textContent;
+ 			node.target.text = element.textContent;
+
 			//Populate node attributes
 			this.getElementAttributes(element, node);
 
@@ -138,6 +180,8 @@
 			//Update attributes (at this stage even if they havent changed)
 			this.updateElementAttributes(node);
 			this.appendElements(node);
+			this.updateValues(node);
+
 
 			node = this.nodes.shift();
 		}
@@ -146,31 +190,33 @@
 	//Return the attributes of an element 
 	UI.prototype.getElementAttributes = function(element, node) {
 		var attrs = element.attributes;
- 		node.source = {};
- 		node.target = {};
+ 		node.source.attrs = {};
+ 		node.target.attrs = {};
       
       	for (var i=0, len=attrs.length; i < len; ++i) {
       		var attr = attrs[i];
 
-      		node.source[attr.name] = attr.value;
-      		node.target[attr.name] = attr.value;
+      		node.source.attrs[attr.name] = attr.value;
+      		node.target.attrs[attr.name] = attr.value;
       	}
 	}
 
 	UI.prototype.updateElementAttributes = function(node) {
 
+		var target = node.target.attrs;
+
 		//Loop through the target attributes and compare to the source
-		for (var key in node.target) {
+		for (var key in target) {
 
 			//Check if key has been added or changed
-			if (node.target[key] !== node.source[key]) {
-				this.elements[node.idx].setAttribute(key, node.target[key]);
+			if (target[key] !== node.source.attrs[key]) {
+				this.elements[node.idx].setAttribute(key, target[key]);
 			}
 		}
 
 		//Remove any attributes that no longer exist in target
-		for (var key in node.target) {
-			if (typeof node.target[key] === 'undefined') element.removeAttribute(key);
+		for (var key in target) {
+			if (typeof target[key] === 'undefined') element.removeAttribute(key);
 		}
 	}
 
@@ -188,6 +234,13 @@
 				child = node.append.shift();
 			}
 		}
+	}
+
+	UI.prototype.updateValues = function(node) {
+		
+		var parentElement = this.elements[node.idx];
+
+		if (node.source.text !== node.target.text) parentElement.textContent = node.target.text;
 	}
 
 	UI.prototype.frameRequest = function() {

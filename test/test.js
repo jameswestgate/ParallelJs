@@ -19,11 +19,14 @@ test('simple dom selection tests', function() {
 	ok(results.length === 1, 'dom function returns a result');
 	
 	var result = results[0];
-	ok(result.source, 'result has source attributes');
-	ok(result.target, 'result has target attributes');
+	ok(result.source.attrs, 'result has source attributes');
+	ok(result.target.attrs, 'result has target attributes');
 
-	ok(result.source.id === 'qunit-fixture', 'result source has correct attribute value');
-	ok(result.target.id === 'qunit-fixture', 'result target has correct attribute value');
+	ok(result.source.attrs.id === 'qunit-fixture', 'result source has correct attribute value');
+	ok(result.target.attrs.id === 'qunit-fixture', 'result target has correct attribute value');
+
+	//Reselect node
+	ok(dom(result) instanceof dom.NodeList, 'reselect node as nodelist');
 });
 
 
@@ -98,6 +101,64 @@ test('append tests', function() {
 	ok(dom('#paragraph7, #paragraph8').length === 2, 'paragraph elements 7 and 8 appended');
 
 	//Pass markup directly to append
+	//todo: write test
+});
+
+test('value tests', function() {
+
+	$('#qunit-fixture').append('<div id="div2">');
+
+	var nodeList = dom('<p id="paragraph9"><span id="span2">hello world</span></p>');
+	ok(nodeList.length === 1, 'fragment returned with paragraph9 element.');
+
+	dom('#div2').append(nodeList);
+	ui.flush();
+
+	//Read text
+	ok(dom('#paragraph9').length === 1, 'paragraph 9 added');
+	ok(dom('#paragraph9 #span2').length === 1, 'span 2 added');
+	ok(dom('#span2').text() === 'hello world', 'text read correctly');
+
+	//Update text
+	dom('#span2').text('test');
+	ui.flush();
+
+	ok(dom('#span2').text() === 'test', 'text updated correctly');
+
+	//Read text multiple nodes
+
+	//Write text multiple nodes
+});
+
+test('callback tests', function() {
+
+	$('#qunit-fixture').append('<div id="div3">');
+
+	var nodeList = dom('<ul id="list1"><li>alpha</li><li>bravo</li><li>charlie</li></ul>');
+
+	dom('#div3').append(nodeList);
+	ui.flush();
+
+	ok(dom('#list1 li').length === 3, 'unsorted list 1 with 3 list items added');
+
+	var count = 0;
+	dom('#list1 li').each(function(i, a) {
+		if (this instanceof dom.Node && this.tagName.toLowerCase() === 'li' && (i >=0 && i<=2) && a.length) count ++;
+	});
+
+	ok(count === 3, 'each list item enumerated');
+
+	//Select item inside each
+	count = 0;
+	dom('#list1 li').each(function(i, a) {
+		var self = dom(this);
+		var text = self.text();
+
+		if (self.length) count++;
+	});
+
+	ok(count === 3, 'each list item converted to sub nodeList');
+
 });
 
 
