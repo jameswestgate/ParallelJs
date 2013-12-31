@@ -77,36 +77,12 @@
 		return this; //allow chaining
 	}
 
-	NodeList.prototype.text = function(s) {
-		
-		if (this.length === 0) return this;
-
-		var node = this[0];
-
-		if (!s) return node.source.text;
-		
-		this.forEach(function(node) {
-			node.target.text = s;
-			context.ui.enqueue(node);
-		});
-
-		return this;
-	}
-
-	NodeList.prototype.each = function(fn) {
-
-		this.forEach(function(node, i, a) {
-
-			fn.call(node, i, a);
-		});
-
-		return this;
-	}
 	
 	//-- UI Singleton --
 	function UI() {
 		this.elements = []; //contains an array of each element that has been returned
 		this.nodes = []; //contains an array of Nodes that need updating
+		this.callbacks = []; //array of functions that are called for each node being updated
 	}
 
 	UI.prototype.select = function(q) {
@@ -178,14 +154,17 @@
 	UI.prototype.flush = function() {
 
 		var node = this.nodes.shift();
+		var elements = this.elements;
 
 		while (node) {
 
+			//Update via generic callbacks array
+			this.callbacks.forEach(function(fn) {
+				fn.call(this, node, elements);
+			});
+
 			//Update attributes (at this stage even if they havent changed)
 			this.updateElementAttributes(node);
-			this.appendElements(node);
-			this.updateValues(node);
-
 
 			node = this.nodes.shift();
 		}
@@ -224,35 +203,16 @@
 		}
 	}
 
-	UI.prototype.appendElements = function(node) {
-		
-		if (node.append && node.append.length) {
-
-			var parentElement = this.elements[node.idx];
-			var child = node.append.shift();
-
-			while (child) {
-
-				parentElement.appendChild(this.elements[child.idx])
-				
-				child = node.append.shift();
-			}
-		}
-	}
-
-	UI.prototype.updateValues = function(node) {
-		
-		var parentElement = this.elements[node.idx];
-
-		if (node.source.text !== node.target.text) parentElement.textContent = node.target.text;
-	}
-
 	UI.prototype.frameRequest = function() {
 
 		//Force all updates
 		context.ui.flush();
 
 		window.requestAnimationFrame(context.ui.frameRequest);
+	}
+
+	UI.prototype.addCallback = function(fn) {
+		this.callbacks.push(fn);
 	}
 
 	//-- Exports
@@ -274,6 +234,7 @@
 /// Internal plug-ins ///
 (function(context) {
 	
+	//Append
 	this.fn.extend('append', function(n) {
 		
 		if (!n || !n.fragment) return;
@@ -285,6 +246,53 @@
 
 		context.ui.enqueue(node);
 	});
+
+	//Each
+	this.fn.extend('each', function(fn) {
+	
+		this.forEach(function(node, i, a) {
+			fn.call(node, i, a);
+		});
+	});
+
+	//Text
+	this.fn.extend('text', function(s) {
+		
+		var node = this[0];
+
+		if (!s) return node.source.text;
+		
+		this.forEach(function(node) {
+			node.target.text = s;
+			context.ui.enqueue(node);
+		});
+	});
+
+	//Generic update handler
+	this.ui.addCallback(function(node, elements) {
+
+		var parentElement = elements[node.idx];
+
+		//Append any new nodes
+		if (node.append && node.append.length) {
+
+			
+			var child = node.append.shift();
+
+			while (child) {
+
+				parentElement.appendChild(elements[child.idx])
+				
+				child = node.append.shift();
+			}
+		}
+
+		//Update any text values
+		if (node.source.text !== node.target.text) parentElement.textContent = node.target.text;
+		
+		
+
+	})
 
 })(this);
 	
