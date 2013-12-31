@@ -20,6 +20,7 @@
 		var len = arguments.length;
 
 		//Loop through each argument and add node references
+		//todo: optimise
 		if (len) {
 			for (var i=0; i<len; i++) {
 				
@@ -33,7 +34,24 @@
 				}
 			}
 		}
-		
+	}
+
+	//Create the function hook for plug-ins
+	NodeList.fn = {
+
+		extend: function(name, fn) {
+
+			NodeList.prototype[name] = function() {
+
+				if (this.length === 0) return this;
+
+				var result = fn.apply(this, arguments);
+
+				if (typeof result !== 'undefined') return result;
+
+				return this;
+			}
+		}
 	}
 
 	//#todo: Methods such as concat will return new arrays instead of NodeLists
@@ -59,21 +77,6 @@
 		return this; //allow chaining
 	}
 
-	NodeList.prototype.append = function(n) {
-		
-		if (this.length === 0 || !n) return this;
-		if (!n.fragment) return;
-
-		var node = this[0];
-
-		//#todo: unnessesary creation of another object, should extend existing array instead
-		node.append = (node.append) ? new NodeList(node.append, n) : n; 
-
-		context.ui.enqueue(node);
-
-		return this;
-	}
-
 	NodeList.prototype.text = function(s) {
 		
 		if (this.length === 0) return this;
@@ -82,8 +85,10 @@
 
 		if (!s) return node.source.text;
 		
-		node.target.text = s;
-		context.ui.enqueue(node);
+		this.forEach(function(node) {
+			node.target.text = s;
+			context.ui.enqueue(node);
+		});
 
 		return this;
 	}
@@ -97,7 +102,6 @@
 
 		return this;
 	}
-
 	
 	//-- UI Singleton --
 	function UI() {
@@ -256,12 +260,32 @@
 		return context.ui.select.call(context.ui, q);
 	}
 
-	context.ui = new UI();
 	context.dom.Node = Node;
 	context.dom.NodeList = NodeList;
+	context.fn = NodeList.fn;
 
 	//-- Begin callback loop
+	context.ui = new UI();
 	context.ui.frameRequest();
 
 })(this);
+
+
+/// Internal plug-ins ///
+(function(context) {
+	
+	this.fn.extend('append', function(n) {
+		
+		if (!n || !n.fragment) return;
+
+		var node = this[0];
+
+		//#todo: unnessesary creation of another object, should extend existing array instead
+		node.append = (node.append) ? new context.dom.NodeList(node.append, n) : n; 
+
+		context.ui.enqueue(node);
+	});
+
+})(this);
+	
 
