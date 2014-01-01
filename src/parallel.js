@@ -58,25 +58,6 @@
 	//So we need to make this array-like instead
 	NodeList.prototype = new Array(); 
 
-	//Query or set attribute values. Converts to string at present
-	NodeList.prototype.attr = function(k, v) {
-
-		if (this.length === 0 || (!k && !v)) return this;
-
-		//Read value of first attribute in results
-		if (!v) return this[0].target.attrs[k];
-
-		//Update results
-		this.forEach(function(node) {
-
-			node.target.attrs[k.toString()] = v.toString();
-			context.ui.enqueue(node);
-			
-		});
-
-		return this; //allow chaining
-	}
-
 	
 	//-- UI Singleton --
 	function UI() {
@@ -129,7 +110,7 @@
 			node.tagName = element.tagName;
 
 			//Create a container for old and new values
-			//Will want to create a 'copy object' method here instead
+			//todo: create a 'copy object' method here instead
 	 		node.source = {};
  			node.target = {};
 
@@ -137,12 +118,27 @@
  			node.target.text = element.textContent;
 
 			//Populate node attributes
-			this.getElementAttributes(element, node);
+			getElementAttributes(element, node);
 
 			nodeList.push(node);
 		}
 
 		return nodeList;
+
+
+		function getElementAttributes(element, node) {
+				
+			var attrs = element.attributes;
+	 		node.source.attrs = {};
+	 		node.target.attrs = {};
+	      
+	      	for (var i=0, len=attrs.length; i < len; ++i) {
+	      		var attr = attrs[i];
+
+	      		node.source.attrs[attr.name] = attr.value;
+	      		node.target.attrs[attr.name] = attr.value;
+	      	}
+		}
 	}
 
 	//Push the node to be updated onto the update queue
@@ -167,21 +163,6 @@
 		}
 	}
 
-	//Return the attributes of an element 
-	//todo: move inside selection loop
-	UI.prototype.getElementAttributes = function(element, node) {
-		
-		var attrs = element.attributes;
- 		node.source.attrs = {};
- 		node.target.attrs = {};
-      
-      	for (var i=0, len=attrs.length; i < len; ++i) {
-      		var attr = attrs[i];
-
-      		node.source.attrs[attr.name] = attr.value;
-      		node.target.attrs[attr.name] = attr.value;
-      	}
-	}
 
 	UI.prototype.frameRequest = function() {
 
@@ -248,6 +229,23 @@
 		});
 	});
 
+	//Attr
+	//Query or set attribute values. Converts to string at present
+	this.fn.extend('attr', function(k, v) {
+
+		if (!k && !v) return;
+
+		//Read value of first attribute in results
+		if (!v) return this[0].target.attrs[k];
+
+		//Update results
+		this.forEach(function(node) {
+
+			node.target.attrs[k.toString()] = v.toString();
+			context.ui.enqueue(node);
+		});
+	});
+
 	//Generic update handler
 	this.ui.addCallback(function(node, elements) {
 
@@ -266,6 +264,7 @@
 				child = node.append.shift();
 			}
 		}
+
 
 		//-- Update any text values
 		if (node.source.text !== node.target.text) parentElement.textContent = node.target.text;
