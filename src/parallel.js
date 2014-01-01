@@ -163,15 +163,14 @@
 				fn.call(this, node, elements);
 			});
 
-			//Update attributes (at this stage even if they havent changed)
-			this.updateElementAttributes(node);
-
 			node = this.nodes.shift();
 		}
 	}
 
 	//Return the attributes of an element 
+	//todo: move inside selection loop
 	UI.prototype.getElementAttributes = function(element, node) {
+		
 		var attrs = element.attributes;
  		node.source.attrs = {};
  		node.target.attrs = {};
@@ -182,25 +181,6 @@
       		node.source.attrs[attr.name] = attr.value;
       		node.target.attrs[attr.name] = attr.value;
       	}
-	}
-
-	UI.prototype.updateElementAttributes = function(node) {
-
-		var target = node.target.attrs;
-
-		//Loop through the target attributes and compare to the source
-		for (var key in target) {
-
-			//Check if key has been added or changed
-			if (target[key] !== node.source.attrs[key]) {
-				this.elements[node.idx].setAttribute(key, target[key]);
-			}
-		}
-
-		//Remove any attributes that no longer exist in target
-		for (var key in target) {
-			if (typeof target[key] === 'undefined') element.removeAttribute(key);
-		}
 	}
 
 	UI.prototype.frameRequest = function() {
@@ -273,7 +253,7 @@
 
 		var parentElement = elements[node.idx];
 
-		//Append any new nodes
+		//-- Append any new nodes
 		if (node.append && node.append.length) {
 
 			
@@ -287,11 +267,26 @@
 			}
 		}
 
-		//Update any text values
+		//-- Update any text values
 		if (node.source.text !== node.target.text) parentElement.textContent = node.target.text;
 		
 		
+		//-- Update or remove any attribute changes
+		var target = node.target.attrs;
 
+		//Loop through the target attributes and compare to the source
+		for (var key in target) {
+
+			//Check if key has been added or changed
+			if (target[key] !== node.source.attrs[key]) {
+				parentElement.setAttribute(key, target[key]);
+			}
+		}
+
+		//Remove any attributes that no longer exist in target
+		for (var key in target) {
+			if (typeof target[key] === 'undefined') parentElement.removeAttribute(key);
+		}
 	})
 
 })(this);

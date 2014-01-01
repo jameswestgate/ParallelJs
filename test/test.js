@@ -45,6 +45,8 @@ test('attribute tests', function() {
 	//Make sure changes are applied to dom 
 	ui.flush();
 	ok(dom('#paragraph1').attr('class') === 'four', 'attr update value working');
+
+	//todo: add attribute removal test
 })
 
 test('append tests', function() {

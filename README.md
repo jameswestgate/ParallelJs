@@ -4,7 +4,7 @@ Unit Tests
 http://jameswestgate.github.io/ParallelJs/test/
 
 
-version 0.3 - in progress
+version 0.3 - complete
 -----------
 
 - move to split node value container
