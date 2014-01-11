@@ -345,6 +345,8 @@
 	      		//You cant in an async environment
 	      		//Which means we might as well bind everything as live events to the document
 	      		//todo: This could be a big problem for eg cancelling or continuing navigation
+	      		//suggestion - in worker thread, prevent default is flipped to on and cant be changed
+	      		//implementation would bind directly in browser threads, but user would have to flip with 'continueDefault'
 	   			parentElement.addEventListener(on[0], function(e) {
 
 	   				if (!node.triggers) node.triggers = [];
