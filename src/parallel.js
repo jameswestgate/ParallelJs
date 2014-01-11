@@ -1,6 +1,6 @@
 /* Library to enable javascript dom manipulation from another browser process  */
 /* https://github.com/jameswestgate/paralleljs */
-/* version 0.3 */
+/* version 0.4 */
 /* Copyright James Westgate 2013 */
 /* Dual licensed under the MIT and GPL licenses */
 
@@ -12,28 +12,25 @@
 	function Node() {
 		
 		//idx, source, target
+ 		this.source = {};
+		this.target = {};
 	}
 
 	//-- NodeList Class --
 	function NodeList() {
 		
-		var len = arguments.length;
+		var self = this;
 
-		//Loop through each argument and add node references
-		//todo: optimise
-		if (len) {
-			for (var i=0; i<len; i++) {
-				
-				var arr = arguments[i];
-				var len2 = arr.length;
-				
-				if (len2) {
-					for (var j=0; j<len2; j++) {
-						if (arr[j] instanceof Node) this.push(arr[j]);
-					}
-				}
+		Array.prototype.slice.call(arguments).forEach(function(arg) {
+
+			//Copy contents of existing NodeList
+			if (arg instanceof NodeList) {
+
+				arg.forEach(function(node) {
+					self.push(node);
+				})
 			}
-		}
+		})
 	}
 
 	//Create the function hook for plug-ins
@@ -63,9 +60,11 @@
 	function UI() {
 		this.elements = []; //contains an array of each element that has been returned
 		this.nodes = []; //contains an array of Nodes that need updating
+		this.inits = []; //array of functions that are called for each node being initialized
 		this.callbacks = []; //array of functions that are called for each node being updated
 	}
 
+	//Main element selection function
 	UI.prototype.select = function(q) {
 		
 		var nodeList = new NodeList();
@@ -94,6 +93,7 @@
 			results = document.querySelectorAll(q);
 		}
 
+		//Turn elements into nodes
 		for (var i=0, len=results.length; i < len; ++i) {
 
 			var element = results[i];
@@ -109,36 +109,15 @@
 			node.idx = element._pidx;
 			node.tagName = element.tagName;
 
-			//Create a container for old and new values
-			//todo: create a 'copy object' method here instead
-	 		node.source = {};
- 			node.target = {};
-
- 			node.source.text = element.textContent;
- 			node.target.text = element.textContent;
-
-			//Populate node attributes
-			getElementAttributes(element, node);
+			//Initialise nodes
+			this.inits.forEach(function(fn) {
+				fn.call(this, node, element);
+			});
 
 			nodeList.push(node);
 		}
 
 		return nodeList;
-
-
-		function getElementAttributes(element, node) {
-				
-			var attrs = element.attributes;
-	 		node.source.attrs = {};
-	 		node.target.attrs = {};
-	      
-	      	for (var i=0, len=attrs.length; i < len; ++i) {
-	      		var attr = attrs[i];
-
-	      		node.source.attrs[attr.name] = attr.value;
-	      		node.target.attrs[attr.name] = attr.value;
-	      	}
-		}
 	}
 
 	//Push the node to be updated onto the update queue
@@ -163,7 +142,6 @@
 		}
 	}
 
-
 	UI.prototype.frameRequest = function() {
 
 		//Force all updates
@@ -172,7 +150,11 @@
 		window.requestAnimationFrame(context.ui.frameRequest);
 	}
 
-	UI.prototype.addCallback = function(fn) {
+	UI.prototype.initialise = function(fn) {
+		this.inits.push(fn);
+	}
+
+	UI.prototype.notify = function(fn) {
 		this.callbacks.push(fn);
 	}
 
@@ -196,7 +178,7 @@
 (function(context) {
 	
 	//Append
-	this.fn.extend('append', function(n) {
+	context.fn.extend('append', function(n) {
 		
 		if (!n || !n.fragment) return;
 
@@ -209,7 +191,7 @@
 	});
 
 	//Each
-	this.fn.extend('each', function(fn) {
+	context.fn.extend('each', function(fn) {
 	
 		this.forEach(function(node, i, a) {
 			fn.call(node, i, a);
@@ -217,7 +199,7 @@
 	});
 
 	//Text
-	this.fn.extend('text', function(s) {
+	context.fn.extend('text', function(s) {
 		
 		var node = this[0];
 
@@ -230,8 +212,8 @@
 	});
 
 	//Attr
-	//Query or set attribute values. Converts to string at present
-	this.fn.extend('attr', function(k, v) {
+	//Query or set attribute values. Converts value to string at present
+	context.fn.extend('attr', function(k, v) {
 
 		if (!k && !v) return;
 
@@ -246,15 +228,62 @@
 		});
 	});
 
-	//Generic update handler
-	this.ui.addCallback(function(node, elements) {
+	//-- Event handlers --
+	context.fn.extend('on', function(n, fn) {
+			
+		//2 arguments = bind
+		//1 argument = trigger
+
+		this.forEach(function(node) {
+			
+			if (n && fn) {
+				node.on.push([n, fn])
+			}
+		});
+
+	});
+
+	context.fn.extend('off', function(n, fn) {
+		
+		//1 argument - remove all
+		//2 args - remove mzatching
+
+
+	});
+
+
+	//-- Generic initialization
+	context.ui.initialise(function(node, element) {
+
+		//Create a container for old and new values
+		node.on = [];
+		node.off = [];
+
+		node.source.text = element.textContent;
+		node.target.text = element.textContent;
+
+		//Populate node attributes
+		var attrs = element.attributes;
+ 		node.source.attrs = {};
+ 		node.target.attrs = {};
+      
+      	for (var i=0, len=attrs.length; i < len; ++i) {
+      		var attr = attrs[i];
+
+      		node.source.attrs[attr.name] = attr.value;
+      		node.target.attrs[attr.name] = attr.value;
+      	}
+	})
+	
+
+	//-- Generic update handler
+	context.ui.notify(function(node, elements) {
 
 		var parentElement = elements[node.idx];
 
 		//-- Append any new nodes
 		if (node.append && node.append.length) {
 
-			
 			var child = node.append.shift();
 
 			while (child) {

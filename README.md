@@ -4,6 +4,12 @@ Unit Tests
 http://jameswestgate.github.io/ParallelJs/test/
 
 
+version 0.4 - in progress
+-----------
+- cleanup source / target creation
+- add and remove event handlers
+
+
 version 0.3 - complete
 -----------
 
