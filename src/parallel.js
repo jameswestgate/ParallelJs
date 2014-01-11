@@ -236,6 +236,8 @@
 
 		this.forEach(function(node) {
 			
+			if (n) n = n.toLowerCase();
+
 			//Bind
 			if (n && fn) {
 				if (!node.on) node.on = [];
@@ -243,7 +245,11 @@
 			}
 			//Trigger
 			else if (n) {
-				//todo: trigger
+				
+				//Loop through and add triggers for all matching handles
+				node.handles.forEach(function(handler) {
+					if (handler[0] === n) node.triggers.push(handler);
+				});
 			}
 		});
 
@@ -265,6 +271,8 @@
 
 	//-- Generic initialization
 	context.ui.initialise(function(node, element) {
+
+		node.handles = [];
 
 		//Add old and new values
 		node.source.text = element.textContent;
@@ -343,6 +351,7 @@
 	   				node.triggers.push(on);
 	   			});
 
+	   			node.handles.push(on);
 	   			on = node.on.shift();
    			}
       	}
