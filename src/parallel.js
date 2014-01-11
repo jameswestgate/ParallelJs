@@ -34,7 +34,7 @@
 	}
 
 	//Create the function hook for plug-ins
-	NodeList.fn = {
+	context.fn = {
 
 		extend: function(name, fn) {
 
@@ -105,6 +105,7 @@
 			}
 
 			//Setup a new node object
+			//A node memoises the state of an element so more than one can exist for each element
 			var node = new Node();
 			node.idx = element._pidx;
 			node.tagName = element.tagName;
@@ -165,7 +166,6 @@
 
 	context.dom.Node = Node;
 	context.dom.NodeList = NodeList;
-	context.fn = NodeList.fn;
 
 	//-- Begin callback loop
 	context.ui = new UI();
@@ -236,8 +236,14 @@
 
 		this.forEach(function(node) {
 			
+			//Bind
 			if (n && fn) {
+				if (!node.on) node.on = [];
 				node.on.push([n, fn])
+			}
+			//Trigger
+			else if (n) {
+				//todo: trigger
 			}
 		});
 
@@ -248,6 +254,11 @@
 		//1 argument - remove all
 		//2 args - remove mzatching
 
+		this.forEach(function(node) {
+			
+			if (!node.off) node.off = [];
+			node.off.push([n, fn])
+		});
 
 	});
 
@@ -255,10 +266,7 @@
 	//-- Generic initialization
 	context.ui.initialise(function(node, element) {
 
-		//Create a container for old and new values
-		node.on = [];
-		node.off = [];
-
+		//Add old and new values
 		node.source.text = element.textContent;
 		node.target.text = element.textContent;
 
@@ -299,7 +307,7 @@
 		if (node.source.text !== node.target.text) parentElement.textContent = node.target.text;
 		
 		
-		//-- Update or remove any attribute changes
+		//-- Update or remove any attribute changes (todo: this needs a dirty flag)
 		var target = node.target.attrs;
 
 		//Loop through the target attributes and compare to the source
@@ -315,6 +323,42 @@
 		for (var key in target) {
 			if (typeof target[key] === 'undefined') parentElement.removeAttribute(key);
 		}
+
+
+      	//-- Detect any new event handlers
+      	if (node.on && node.on.length) {
+      		
+      		var on = node.on.shift();
+	      		
+	      	while (on) {
+	      		
+	      		//Wrap the actual event and use it to call the bound function
+	      		//How on earth do you stop events going up the dom?
+	      		//You cant in an async environment
+	      		//Which means we might as well bind everything as live events to the document
+	      		//todo: This could be a big problem for eg cancelling or continuing navigation
+	   			parentElement.addEventListener(on[0], function(e) {
+
+	   				if (!node.triggers) node.triggers = [];
+	   				node.triggers.push(on);
+	   			});
+
+	   			on = node.on.shift();
+   			}
+      	}
+
+      	//-- Trigger any events
+      	if (node.triggers && node.triggers.length) {
+
+      		var trigger = node.triggers.shift();
+	      		
+	      	while (trigger) {
+	      		
+	      		//todo: In a true async environment, the worker thread is going to have to lookup the node reference
+	      		trigger[1].call(node);
+	   			trigger = node.trigger.shift();
+   			}
+      	}
 	})
 
 })(this);
