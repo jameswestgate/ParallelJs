@@ -163,7 +163,19 @@ test('callback tests', function() {
 
 });
 
+test('event tests', function() {
 
+	var result = false;
 
+	$('#qunit-fixture').append('<div id="div4"><a href="#">link</a></div>');
 
+	$('#div4 a').on('click', function(e) {
+		result = true;
+	});
+
+	$('#div4 a').trigger('click');
+	ui.flush();
+
+	ok(result, 'Test anchor was manually clicked');
+});
 

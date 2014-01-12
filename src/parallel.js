@@ -231,34 +231,24 @@
 	//-- Event handlers --
 	context.fn.extend('on', function(n, fn) {
 			
-		//2 arguments = bind
-		//1 argument = trigger
-
-		this.forEach(function(node) {
+		if (n && fn) {
 			
-			if (n) n = n.toLowerCase();
+			n = n.toLowerCase();
 
 			//Bind
-			if (n && fn) {
+			this.forEach(function(node) {
+				
 				if (!node.on) node.on = [];
 				node.on.push([n, fn])
-			}
-			//Trigger
-			else if (n) {
-				
-				//Loop through and add triggers for all matching handles
-				node.handles.forEach(function(handler) {
-					if (handler[0] === n) node.triggers.push(handler);
-				});
-			}
-		});
+			});
+		}
 
 	});
 
 	context.fn.extend('off', function(n, fn) {
 		
 		//1 argument - remove all
-		//2 args - remove mzatching
+		//2 args - remove matching
 
 		this.forEach(function(node) {
 			
@@ -267,6 +257,26 @@
 		});
 
 	});
+
+
+	//-- Trigger an event
+	context.fn.extend('trigger', function(n) {
+
+		if (n) {
+			
+			n = n.toLowerCase();
+
+			this.forEach(function(node) {
+				
+				//Loop through and add triggers for all matching handles
+				//todo: this is a soft trigger, the real event isnt triggered in the dom
+				//investigate if we want to fire an event instead
+				node.handles.forEach(function(handler) {
+					if (handler[0] === n) node.triggers.push(handler);
+				});
+			});
+		}
+	})
 
 
 	//-- Generic initialization
@@ -346,7 +356,7 @@
 	      		//Which means we might as well bind everything as live events to the document
 	      		//todo: This could be a big problem for eg cancelling or continuing navigation
 	      		//suggestion - in worker thread, prevent default is flipped to on and cant be changed
-	      		//implementation would bind directly in browser threads, but user would have to flip with 'continueDefault'
+	      		//implementation would bind directly in browser threads and preventDefault & continueDefault would manually change this
 	   			parentElement.addEventListener(on[0], function(e) {
 
 	   				if (!node.triggers) node.triggers = [];
