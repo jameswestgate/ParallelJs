@@ -3,6 +3,11 @@ Unit Tests
 
 http://jameswestgate.github.io/ParallelJs/test/
 
+version 0.5 - planned
+-----------
+- external node / nodelist initialisation
+- add document ready with optional selector filter
+
 
 version 0.4 - in progress
 -----------
