@@ -99,15 +99,15 @@
 			var element = results[i];
 
 			//Push to array of elements and store index on the element
-			if (!element._pidx) {
+			if (!element.__pidx) {
 				this.elements.push(element);
-				element._pidx = this.elements.length - 1;
+				element.__pidx = this.elements.length - 1;
 			}
 
 			//Setup a new node object
 			//A node memoises the state of an element so more than one can exist for each element
 			var node = new Node();
-			node.idx = element._pidx;
+			node.idx = element.__pidx;
 			node.tagName = element.tagName;
 
 			//Initialise nodes
@@ -174,9 +174,141 @@
 })(this);
 
 
+/// Events ///
+(function(context) {
+
+	//-- Setup and process a collection of all document event handlers
+	var handles = {};
+
+	var eventClasses = {
+		'MouseEvents': ['click', 'mousedown', 'mouseup'],
+		'HTMLEvents': ['focus', 'change', 'blur', 'select']
+	};
+
+	//Add mouse events listeners to the document
+	eventClasses.MouseEvents.forEach(function(name){
+
+		handles[name] = [];
+		
+		document.addEventListener(name, handleEvent);
+	});
+
+	//Add html events listeners to the document
+	eventClasses.HTMLEvents.forEach(function(name){
+
+		handles[name] = [];
+		
+		document.addEventListener(name, handleEvent);
+	});
+
+	//Generic handler for all events
+	function handleEvent(e) {
+		
+		//We need to know the event name and also the event target
+		handles[e.type].forEach(function(handle){
+			handle.call(handle, e);
+		});
+	}
+
+	//Plug-ins to add event handlers
+	context.fn.extend('on', function(n, fn) {
+			
+		if (n) {
+			
+			n = n.toLowerCase();
+
+			this.forEach(function(node) {
+				
+				if (fn) {
+					
+					if (!node.on) node.on = [];
+					node.on.push([n, fn]);
+
+					context.ui.enqueue(node);
+				}
+				else {
+				
+					//Add unvalidated trigger
+					if (!node.triggers) node.triggers = [];
+					node.triggers.push(n);
+
+					context.ui.enqueue(node);
+				}
+			});
+		}
+
+	});
+
+	context.fn.extend('off', function(n, fn) {
+		
+		//1 argument - remove all
+		//2 args - remove matching
+
+		this.forEach(function(node) {
+			
+			if (!node.off) node.off = [];
+			node.off.push([n, fn])
+
+			context.ui.enqueue(node);
+		});
+
+	});
+
+	//-- Handle node updates
+	context.ui.notify(function(node, elements) {
+
+      	//Detect any new event handlers
+      	if (node.on && node.on.length) {
+      		
+      		var on = node.on.shift();
+	      		
+	      	while (on) {
+	      		
+	      		//How on earth do you stop events going up the dom?
+	      		//You cant in an async environment
+	      		//Which means we might as well bind everything as live events to the document
+	      		//todo: This could be a big problem for eg cancelling or continuing navigation
+	      		//suggestion - in worker thread, prevent default is flipped to on and cant be changed
+	      		//implementation would bind directly in browser threads and preventDefault & continueDefault would manually change this
+	      		handles[on[0]].push(on[1]);
+
+	   			on = node.on.shift();
+   			}
+      	}
+
+      	//Trigger any events
+      	if (node.triggers && node.triggers.length) {
+
+      		var eventName = node.triggers.shift();
+	      		
+	      	while (eventName) {
+	      	
+	      		//Fire the actual event on the element
+		        var eventClass = '';
+
+		        // Different events have different event classes.
+		        // If this switch statement can't map an eventName to an eventClass,
+		        // the event firing is going to fail.
+		        eventClass = (eventClasses.MouseEvents.indexOf(eventName) !== -1) ? 'MouseEvents' : 'HTMLEvents';
+
+		        var evt = document.createEvent(eventClass);		        
+		        evt.initEvent(eventName, eventName !== 'change', true); // All events created as bubbling and cancelable.
+		        evt.synthetic = true; // allow detection of synthetic events
+		        
+		        // The second parameter says go ahead with the default action
+		        elements[node.idx].dispatchEvent(evt, true);
+
+	   			eventName = node.triggers.shift();
+   			}
+      	}
+	})
+
+})(this);
+
+
 /// Internal plug-ins ///
 (function(context) {
-	
+
 	//Append
 	context.fn.extend('append', function(n) {
 		
@@ -228,61 +360,9 @@
 		});
 	});
 
-	//-- Event handlers --
-	context.fn.extend('on', function(n, fn) {
-			
-		if (n && fn) {
-			
-			n = n.toLowerCase();
-
-			//Bind
-			this.forEach(function(node) {
-				
-				if (!node.on) node.on = [];
-				node.on.push([n, fn])
-			});
-		}
-
-	});
-
-	context.fn.extend('off', function(n, fn) {
-		
-		//1 argument - remove all
-		//2 args - remove matching
-
-		this.forEach(function(node) {
-			
-			if (!node.off) node.off = [];
-			node.off.push([n, fn])
-		});
-
-	});
-
-
-	//-- Trigger an event
-	context.fn.extend('trigger', function(n) {
-
-		if (n) {
-			
-			n = n.toLowerCase();
-
-			this.forEach(function(node) {
-				
-				//Loop through and add triggers for all matching handles
-				//todo: this is a soft trigger, the real event isnt triggered in the dom
-				//investigate if we want to fire an event instead
-				node.handles.forEach(function(handler) {
-					if (handler[0] === n) node.triggers.push(handler);
-				});
-			});
-		}
-	})
-
 
 	//-- Generic initialization
 	context.ui.initialise(function(node, element) {
-
-		node.handles = [];
 
 		//Add old and new values
 		node.source.text = element.textContent;
@@ -341,45 +421,6 @@
 		for (var key in target) {
 			if (typeof target[key] === 'undefined') parentElement.removeAttribute(key);
 		}
-
-
-      	//-- Detect any new event handlers
-      	if (node.on && node.on.length) {
-      		
-      		var on = node.on.shift();
-	      		
-	      	while (on) {
-	      		
-	      		//Wrap the actual event and use it to call the bound function
-	      		//How on earth do you stop events going up the dom?
-	      		//You cant in an async environment
-	      		//Which means we might as well bind everything as live events to the document
-	      		//todo: This could be a big problem for eg cancelling or continuing navigation
-	      		//suggestion - in worker thread, prevent default is flipped to on and cant be changed
-	      		//implementation would bind directly in browser threads and preventDefault & continueDefault would manually change this
-	   			parentElement.addEventListener(on[0], function(e) {
-
-	   				if (!node.triggers) node.triggers = [];
-	   				node.triggers.push(on);
-	   			});
-
-	   			node.handles.push(on);
-	   			on = node.on.shift();
-   			}
-      	}
-
-      	//-- Trigger any events
-      	if (node.triggers && node.triggers.length) {
-
-      		var trigger = node.triggers.shift();
-	      		
-	      	while (trigger) {
-	      		
-	      		//todo: In a true async environment, the worker thread is going to have to lookup the node reference
-	      		trigger[1].call(node);
-	   			trigger = node.trigger.shift();
-   			}
-      	}
 	})
 
 })(this);

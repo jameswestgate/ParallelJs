@@ -169,11 +169,14 @@ test('event tests', function() {
 
 	$('#qunit-fixture').append('<div id="div4"><a href="#">link</a></div>');
 
-	$('#div4 a').on('click', function(e) {
+	dom('#div4 a').on('click', function(e) {
 		result = true;
 	});
+	
+	ui.flush();
 
-	$('#div4 a').trigger('click');
+	//Now trigger the click manually
+	dom('#div4 a').on('click');
 	ui.flush();
 
 	ok(result, 'Test anchor was manually clicked');
