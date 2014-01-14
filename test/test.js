@@ -166,6 +166,7 @@ test('callback tests', function() {
 test('event tests', function() {
 
 	var result = false;
+	var count = 0;
 
 	$('#qunit-fixture').append('<div id="div4"><a href="#">link</a></div>');
 
@@ -180,19 +181,48 @@ test('event tests', function() {
 	ui.flush();
 
 	ok(result, 'Test anchor was manually clicked');
+});
 
+test('advanced event tests', function() {
+
+	var count = 0;
+
+	$('#qunit-fixture').append('<div id="div5"><a href="#">link</a></div>');
+
+	//Increments by 1
+	dom('#div5 a').on('click', function(e) {
+		count++;
+	});
+
+	//Increments by 2
+	dom('#div5 a').on('click', function(e) {
+		count += 2;
+	});
+
+	dom('#div5 a').on('click');
+	ui.flush();
+
+	ok(count === 3, 'Multiple event handlers called')
+
+	count = 0;
+	
+	dom('#div5 a').off('click');
+	ui.flush();
+
+	dom('#div5 a').on('click');
+	
+	ok(count === 0, 'Multiple event handlers removed successfully (' + count + ')');
+	
 	//Event prevention test
-	//Multiple events test
-	//Event off tests
 	//Correct event parameter
-	//Creat nodelist from node context
+	//Create nodelist from node context
 });
 
 test('document tests', function() {
 
 	expect(6);
 
-	$('#qunit-fixture').append('<div id="div5">');
+	$('#qunit-fixture').append('<div id="div6">');
 
 	var doc = new dom.Document();
 	ok(doc instanceof dom.Document , 'Document instance created');
@@ -209,7 +239,7 @@ test('document tests', function() {
 		start();
 	});
 
-	dom(document, '#div5').ready(function() {
+	dom(document, '#div6').ready(function() {
 		
 		ok(true, 'Document is ready with filter');
 		start();

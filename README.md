@@ -6,10 +6,10 @@ http://jameswestgate.github.io/ParallelJs/test/
 version 0.5 - in progress
 -----------
 - external node / nodelist initialisation
-- add document ready with optional selector filter -> (document.addEventListener('DOMContentLoaded', fn, false));
+- add document ready with optional selector filter
+- auto ui.flush 
 
-
-version 0.4 - in progress
+version 0.4 - complete
 -----------
 - cleanup source / target creation
 - add and remove event handlers
