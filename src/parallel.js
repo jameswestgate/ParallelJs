@@ -270,7 +270,6 @@
 		
 		//1 argument - remove all
 		//2 args - remove matching
-
 		this.forEach(function(node) {
 			
 			if (!node.off) node.off = [];

@@ -127,9 +127,9 @@ test('value tests', function() {
 
 	ok(dom('#span2').text() === 'test', 'text updated correctly');
 
-	//Read text multiple nodes
+	//todo: Read text multiple nodes
 
-	//Write text multiple nodes
+	//todo: Write text multiple nodes
 });
 
 test('callback tests', function() {
@@ -213,9 +213,10 @@ test('advanced event tests', function() {
 	
 	ok(count === 0, 'Multiple event handlers removed successfully (' + count + ')');
 	
-	//Event prevention test
-	//Correct event parameter
-	//Create nodelist from node context
+	//todo: Event prevention test
+	//todo: Correct event parameter values
+	//todo: check 'this' context
+	//todo: event syncronisation
 });
 
 test('document tests', function() {
