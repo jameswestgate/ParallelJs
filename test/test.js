@@ -180,5 +180,49 @@ test('event tests', function() {
 	ui.flush();
 
 	ok(result, 'Test anchor was manually clicked');
+
+	//Event prevention test
+	//Multiple events test
+	//Event off tests
+	//Correct event parameter
+	//Creat nodelist from node context
+});
+
+test('document tests', function() {
+
+	expect(6);
+
+	$('#qunit-fixture').append('<div id="div5">');
+
+	var doc = new dom.Document();
+	ok(doc instanceof dom.Document , 'Document instance created');
+
+	var results = dom(document);
+
+  	ok(results instanceof window.dom.NodeList, 'dom document function returns NodeList');
+	ok(results.length === 1, 'dom function returns a list with one item');
+	ok(results[0] instanceof dom.Document , 'dom function returns a Document instance');
+	
+	dom(document).ready(function() {
+		
+		ok(true, 'Document is ready');
+		start();
+	});
+
+	dom(document, '#div5').ready(function() {
+		
+		ok(true, 'Document is ready with filter');
+		start();
+	});
+
+	dom(document, '#no-exists').ready(function() {
+		
+		ok(true, 'This should not be called');
+		start();
+	});
+
+	stop();
+
+	ui.flush();
 });
 

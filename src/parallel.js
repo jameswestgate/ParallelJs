@@ -33,6 +33,13 @@
 		})
 	}
 
+	function Document() {
+		this.filter = '';
+	}
+
+	Document.prototype = new Node();
+	
+
 	//Create the function hook for plug-ins
 	context.fn = {
 
@@ -65,10 +72,21 @@
 	}
 
 	//Main element selection function
-	UI.prototype.select = function(q) {
+	UI.prototype.select = function(q, s) {
 		
 		var nodeList = new NodeList();
 		var results;
+
+		//Passed in actual document or internal document
+		if (q === document || q instanceof Document) {
+			
+			var doc = (q === document) ? new Document() : q;
+
+			if (s) doc.filter = s;
+
+			nodeList.push(doc);
+			return nodeList;
+		}
 
 		//Passed in a node
 		if (q instanceof Node) {
@@ -106,11 +124,9 @@
 
 			//Setup a new node object
 			//A node memoises the state of an element so more than one can exist for each element
-			var node = new Node();
-			node.idx = element.__pidx;
-			node.tagName = element.tagName;
+			var node = context.ui.createNode(element);
 
-			//Initialise nodes
+			//Initialise node
 			this.inits.forEach(function(fn) {
 				fn.call(this, node, element);
 			});
@@ -119,6 +135,15 @@
 		}
 
 		return nodeList;
+	}
+
+	UI.prototype.createNode = function(element) {
+		var node = new Node();
+		
+		node.idx = element.__pidx;
+		node.tagName = element.tagName;
+
+		return node;
 	}
 
 	//Push the node to be updated onto the update queue
@@ -160,16 +185,17 @@
 	}
 
 	//-- Exports
-	context.dom = function(q) {
-		return context.ui.select.call(context.ui, q);
+	context.dom = function(q, s) {
+		return context.ui.select.call(context.ui, q, s);
 	}
 
 	context.dom.Node = Node;
 	context.dom.NodeList = NodeList;
+	context.dom.Document = Document;
 
 	//-- Begin callback loop
 	context.ui = new UI();
-	context.ui.frameRequest();
+	document.addEventListener('DOMContentLoaded', context.ui.frameRequest, false);
 
 })(this);
 
@@ -206,7 +232,7 @@
 		
 		//We need to know the event name and also the event target
 		handles[e.type].forEach(function(handle){
-			handle.call(handle, e);
+			handle.call(context.ui.createNode(e.target), e);
 		});
 	}
 
@@ -219,6 +245,7 @@
 
 			this.forEach(function(node) {
 				
+				//todo: combine node.on and node.triggers into single array
 				if (fn) {
 					
 					if (!node.on) node.on = [];
@@ -258,6 +285,7 @@
 	context.ui.notify(function(node, elements) {
 
       	//Detect any new event handlers
+      	//todo: combine node.on and node.triggers into single array
       	if (node.on && node.on.length) {
       		
       		var on = node.on.shift();
@@ -283,19 +311,15 @@
 	      		
 	      	while (eventName) {
 	      	
-	      		//Fire the actual event on the element
-		        var eventClass = '';
-
-		        // Different events have different event classes.
-		        // If this switch statement can't map an eventName to an eventClass,
-		        // the event firing is going to fail.
-		        eventClass = (eventClasses.MouseEvents.indexOf(eventName) !== -1) ? 'MouseEvents' : 'HTMLEvents';
+		        //Different events have different event classes.
+		        //If you can't map an eventName to an eventClass then the event firing is going to fail.
+		        var eventClass = (eventClasses.MouseEvents.indexOf(eventName) !== -1) ? 'MouseEvents' : 'HTMLEvents';
 
 		        var evt = document.createEvent(eventClass);		        
 		        evt.initEvent(eventName, eventName !== 'change', true); // All events created as bubbling and cancelable.
 		        evt.synthetic = true; // allow detection of synthetic events
 		        
-		        // The second parameter says go ahead with the default action
+		        //The second parameter says go ahead with the default action
 		        elements[node.idx].dispatchEvent(evt, true);
 
 	   			eventName = node.triggers.shift();
@@ -308,6 +332,18 @@
 
 /// Internal plug-ins ///
 (function(context) {
+
+	//Ready 
+	context.fn.extend('ready', function(fn) {
+
+		var node = this[0];
+
+		if (node instanceof context.dom.Document) {
+
+			node.ready = fn;
+			context.ui.enqueue(node);
+		}
+	});
 
 	//Append
 	context.fn.extend('append', function(n) {
@@ -385,6 +421,14 @@
 	//-- Generic update handler
 	context.ui.notify(function(node, elements) {
 
+		if (node instanceof context.dom.Document) {
+
+			var flag = (!node.filter) || document.querySelectorAll(node.filter).length;
+			if (flag) node.ready.call();
+
+			return;
+		}
+
 		var parentElement = elements[node.idx];
 
 		//-- Append any new nodes
@@ -409,6 +453,7 @@
 		var target = node.target.attrs;
 
 		//Loop through the target attributes and compare to the source
+		//todo: need heuristic to bypass iterative check
 		for (var key in target) {
 
 			//Check if key has been added or changed

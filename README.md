@@ -3,10 +3,10 @@ Unit Tests
 
 http://jameswestgate.github.io/ParallelJs/test/
 
-version 0.5 - planned
+version 0.5 - in progress
 -----------
 - external node / nodelist initialisation
-- add document ready with optional selector filter
+- add document ready with optional selector filter -> (document.addEventListener('DOMContentLoaded', fn, false));
 
 
 version 0.4 - in progress
