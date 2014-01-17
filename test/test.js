@@ -1,20 +1,20 @@
 test('interface tests', function() {
 
-	ok(window.dom, 'dom is present');
-	ok(typeof window.dom === 'function', 'dom is a function');
+	ok(dom, 'dom is present');
+	ok(typeof dom === 'function', 'dom is a function');
 
-	ok(window.dom.Node, 'Node class present.');
-	ok(window.dom.NodeList, 'NodeList class present.');
-	ok(new window.dom.NodeList().length === 0, 'NodeList behaves like an array');
+	ok(dom.Node, 'Node class present.');
+	ok(dom.NodeList, 'NodeList class present.');
+	ok(new dom.NodeList().length === 0, 'NodeList behaves like an array');
 	
 });
 
 
 test('simple dom selection tests', function() {
   
-	var results = window.dom('#qunit-fixture');
+	var results = dom('#qunit-fixture');
 
-  	ok(results instanceof window.dom.NodeList, 'dom function returns NodeList');
+  	ok(results instanceof dom.NodeList, 'dom function returns NodeList');
 
 	ok(results.length === 1, 'dom function returns a result');
 	
@@ -230,7 +230,7 @@ test('document tests', function() {
 
 	var results = dom(document);
 
-  	ok(results instanceof window.dom.NodeList, 'dom document function returns NodeList');
+  	ok(results instanceof dom.NodeList, 'dom document function returns NodeList');
 	ok(results.length === 1, 'dom function returns a list with one item');
 	ok(results[0] instanceof dom.Document , 'dom function returns a Document instance');
 	
@@ -257,3 +257,25 @@ test('document tests', function() {
 	ui.flush();
 });
 
+test('serialization tests', function() {
+
+	$('#qunit-fixture').append('<div id="div7"><ul id="list1"><li>alpha</li><li>bravo</li><li>charlie</li></ul></div>');
+
+	ui.flush();
+
+	var doc = new dom.Document();
+	var nodeList = dom('li');
+
+	var node = nodeList[0];
+	var json = node.stringify();
+	var node2 = doc.parseNode(json);
+
+	ok(node.idx === node2.idx && node.tagName === node2.tagName, 'Cloned node matches original node');
+
+	json = nodeList.stringify();
+	var nodeList2 = doc.parseNodeList(json);
+
+	node = nodeList[0], node2 = nodeList2[0];
+	ok(nodeList.length === nodeList2.length && node.idx === node2.idx && node.tagName === node2.tagName, 'Cloned NodeList matches original NodeList');
+
+});

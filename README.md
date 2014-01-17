@@ -13,9 +13,9 @@ http://jameswestgate.github.io/ParallelJs/test/
 Milestones
 ----------
 
-###version 0.6 - planned
+###version 0.6 - in progress
 
-- add basic details to Document such as url
+- add basic details to Document such as url *
 - object serialization / deserialization for Node, NodeList and Document
 
 ###version 0.5 - in progress

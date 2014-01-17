@@ -8,12 +8,38 @@
 /// Core Module ///
 (function(context) {
 
-	// -- Node Class --
+	//-- Node Class --
 	function Node() {
 		
 		//idx, source, target
  		this.source = {};
 		this.target = {};
+	}
+
+	Node.prototype.stringify = function() {
+		return JSON.stringify(this);
+	}
+
+
+	//-- Document Class --
+	function Document() {
+		this.filter = '';
+	}
+
+	Document.prototype = new Node();
+
+	Document.prototype.parseNode = function(json) {
+		var obj = JSON.parse(json);
+		obj.prototype = new Node();
+
+		return obj;
+	}
+
+	Document.prototype.parseNodeList = function(json) {
+		var obj = JSON.parse(json);
+		obj.prototype = new NodeList();
+
+		return obj;
 	}
 
 	//-- NodeList Class --
@@ -24,7 +50,7 @@
 		Array.prototype.slice.call(arguments).forEach(function(arg) {
 
 			//Copy contents of existing NodeList
-			if (arg instanceof NodeList) {
+			if (arg.length) {
 
 				arg.forEach(function(node) {
 					self.push(node);
@@ -33,12 +59,13 @@
 		})
 	}
 
-	function Document() {
-		this.filter = '';
-	}
+	//#todo: Methods such as concat will return new arrays instead of NodeLists
+	//So we need to make this array-like instead
+	NodeList.prototype = new Array();
 
-	Document.prototype = new Node();
-	
+	NodeList.prototype.stringify = function() {
+		return JSON.stringify(this);
+	}
 
 	//Create the function hook for plug-ins
 	context.fn = {
@@ -57,10 +84,6 @@
 			}
 		}
 	}
-
-	//#todo: Methods such as concat will return new arrays instead of NodeLists
-	//So we need to make this array-like instead
-	NodeList.prototype = new Array(); 
 
 	
 	//-- UI Singleton --
