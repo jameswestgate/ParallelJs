@@ -3,7 +3,9 @@ About
 
 Most machines and phones  have at least 2 cpu cores available, however the architecture of all modern browsers is inherently single-threaded. Website and javascript-driven single page applications written for modern browsers can execute code in seperate worker threads however these threads have no access to the DOM. 
 
-Parallel JS is a proof-of-concept library to allow access to the DOM from any worker or shared worker process utilising a familiar jQuery-like syntax. The aims of the library are to provide a seamless and easy entry point into writing multi-process browser code that just works.
+Parallel JS is a personal project and proof-of-concept library to demonstrate the possibility of access to the DOM from any worker or shared worker process utilising a familiar jQuery-like syntax since this lamda-function style lends itself to this type of problem.
+
+The aims of the library are to provide a seamless and easy entry point into writing multi-process browser code that just works.
 
 Unit Tests
 ----------
